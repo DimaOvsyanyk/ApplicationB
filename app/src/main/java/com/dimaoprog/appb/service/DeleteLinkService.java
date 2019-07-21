@@ -45,7 +45,7 @@ public class DeleteLinkService extends Service {
                         () -> {
                             getContentResolver().delete(ContentUris.withAppendedId(URI_IMAGE, id), null, null);
                             Toast.makeText(getApplicationContext(), "Link deleted", Toast.LENGTH_SHORT).show();
-                            this.stopSelf();
+//                            this.stopSelf();
                         }));
         return super.onStartCommand(intent, flags, startId);
     }
