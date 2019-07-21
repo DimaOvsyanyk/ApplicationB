@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">AppB</string>
+    <string name="error_open_message">Its not an independent app, will close</string>
+    <string name="image">image</string>
+</resources>
