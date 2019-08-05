@@ -3,10 +3,12 @@ package com.dimaoprog.appb;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.databinding.DataBindingUtil;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
 import android.content.ContentUris;
 import android.content.ContentValues;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
@@ -21,8 +23,8 @@ import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
-import com.dimaoprog.appb.service.DeleteLinkService;
 import com.dimaoprog.appb.databinding.ActivityMainBinding;
+import com.dimaoprog.appb.work.DeleteLinkWorker;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -33,6 +35,8 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -58,6 +62,7 @@ public class MainActivity extends AppCompatActivity {
     private String url;
     private int status;
     private long openTime;
+    private long openStart;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,21 +72,30 @@ public class MainActivity extends AppCompatActivity {
         status = getIntent().getIntExtra(COLUMN_STATUS, 0);
         id = getIntent().getLongExtra(COLUMN_ID, 0);
         openTime = getIntent().getLongExtra(COLUMN_OPEN_TIME, 0);
+        openStart = getIntent().getLongExtra(OPEN_START, 0);
 
         switch (status) {
             case 0:
-                openTime = System.currentTimeMillis() -
-                        getIntent().getLongExtra(OPEN_START, 0);
+                openTime = System.currentTimeMillis() - openStart;
                 addNewLink();
                 break;
             case STATUS_LOADED:
-                Intent deleteIntent = new Intent(this, DeleteLinkService.class);
-                deleteIntent.putExtra(COLUMN_ID, id);
-                startService(deleteIntent);
+                startDeleteLinkWork();
                 loadImageToStorage();
                 break;
         }
         showImage();
+    }
+
+    private void startDeleteLinkWork() {
+        Data idData = new Data.Builder()
+                .putLong(COLUMN_ID, id)
+                .build();
+        OneTimeWorkRequest deleteLinkWorkRequest = new OneTimeWorkRequest.Builder(DeleteLinkWorker.class)
+                .setInputData(idData)
+                .setInitialDelay(15, TimeUnit.SECONDS)
+                .build();
+        WorkManager.getInstance(this).enqueue(deleteLinkWorkRequest);
     }
 
     private void addNewLink() {
@@ -135,7 +149,7 @@ public class MainActivity extends AppCompatActivity {
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
-                connection.disconnect();
+                Objects.requireNonNull(connection).disconnect();
             }
             return null;
         })
@@ -185,6 +199,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        disposable.clear();
+        disposable.dispose();
     }
 }

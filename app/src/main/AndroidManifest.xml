@@ -13,11 +13,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <service
-            android:name=".service.DeleteLinkService"
-            android:enabled="true"
-            android:exported="true"></service>
-
         <activity
             android:name=".FalseActivity"
             android:configChanges="orientation|screenSize|keyboardHidden">
@@ -28,18 +23,14 @@
             </intent-filter>
         </activity>
 
-        <receiver
-            android:name=".broadcastReceiver.UrlReceiver"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="com.dimaoprog.action.URL_PICKED" />
-            </intent-filter>
-        </receiver>
-
         <activity
             android:name=".MainActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden"></activity>
+            android:configChanges="orientation|screenSize|keyboardHidden">
+            <intent-filter>
+                <action android:name="com.dimaoprog.action.URL_PICKED"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>
